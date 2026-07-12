@@ -1,56 +1,105 @@
 # Getting started
 
-A paris script is a single source file that the loader runs. The same script
-model is available in two languages — **Lua** and **AngelScript** — with a
-shared API surface.
+A paris script is a single source file loaded from your scripts directory.
+The engine supports two languages — **Lua** and **AngelScript** — with the
+same API surface.
 
 ## Your first script
+
+Every script defines at least `main()` and returns a positive integer to keep
+running. Add `on_frame()` for per-frame work and `on_unload()` for cleanup.
 
 {% tabs %}
 {% tab title="Lua" %}
 ```lua
--- registered once when the script loads
-local enabled = gui.checkbox("Enable ESP")
+local sub, panel, enabled
 
--- called every frame
-local function on_paint()
-    if not enabled:get() then return end
-    render.text(vec2_t.new(10, 10), color_t.new(255, 255, 255), "ESP on")
+function main()
+    sub     = ui.create_subtab(0, "My Script")
+    panel   = sub:add_panel("Settings", false)
+    enabled = panel:add_checkbox("Enable overlay", false)
+    engine.log("hello from " .. engine.get_user_name())
+    return 1
 end
 
-callbacks.add("paint", on_paint)
+function on_frame()
+    if enabled:get() then
+        render.draw_text(vector2.new(20, 20),
+                         color_t.new(255, 255, 255),
+                         "overlay active",
+                         render.FONT_20, render.EFFECT_SHADOW)
+    end
+    return 1
+end
+
+function on_unload()
+    engine.log("my_script unloading")
+end
 ```
 {% endtab %}
 
 {% tab title="AngelScript" %}
 ```cpp
-// registered once when the script loads
-Checkbox@ enabled = gui::checkbox("Enable ESP");
+Subtab@   sub;
+Panel@    panel;
+Checkbox@ enabled;
 
-// called every frame
-void on_paint()
+int main()
 {
-    if (!enabled.get()) return;
-    render::text(vec2_t(10, 10), color_t(255, 255, 255), "ESP on");
+    @sub     = ui::create_subtab(0, "My Script");
+    @panel   = sub.add_panel("Settings", false);
+    @enabled = panel.add_checkbox("Enable overlay", false);
+    engine::log("hello from " + engine::get_user_name());
+    return 1;
 }
 
-void main()
+int on_frame()
 {
-    callbacks::add("paint", @on_paint);
+    if (enabled.get())
+        render::draw_text(vector2(20, 20),
+                          color_t(255, 255, 255),
+                          "overlay active",
+                          20, 2);
+    return 1;
+}
+
+void on_unload()
+{
+    engine::log("my_script unloading");
 }
 ```
 {% endtab %}
 {% endtabs %}
 
-## Lifecycle
+## Loading a script
 
-| Stage      | Lua                        | AngelScript                     |
-| ---------- | -------------------------- | ------------------------------- |
-| Load       | top-level code runs once   | `void main()` runs once         |
-| Per frame  | `paint` callback           | `paint` callback                |
-| Unload     | `shutdown` callback        | `shutdown` callback             |
+Drop your `.lua` or `.as` file into paris' `scripts/` directory. paris loads
+every script found there at startup and rebuilds them automatically when they
+change on disk.
+
+## What happens when the script runs
+
+| Step | What paris does |
+|------|-----------------|
+| 1. Load | Reads the file, opens a fresh sandbox, calls `main()`. |
+| 2. Persist check | If `main()` returned `> 0` and the script defines `on_frame()`, keeps it alive. |
+| 3. Per frame | Calls `on_frame()` every render tick. Returning `<= 0` unloads the script. |
+| 4. Unload | Calls `on_unload()`, drops the UI, drops the callbacks. |
+
+## Rules
 
 {% hint style="warning" %}
-Create your GUI controls **once**, at load time — never inside a per-frame
-callback. Store the handle (like `enabled` above) and call `:get()` each frame.
+Create your UI elements **once** in `main()`. Never call `panel:add_checkbox`
+from `on_frame` — you'd spawn a new control every frame and freeze the menu.
 {% endhint %}
+
+{% hint style="warning" %}
+`on_frame` runs on the render thread — keep it cheap. Heavy work (HTTP
+requests, big JSON, disk I/O) belongs in a button callback or a coroutine.
+{% endhint %}
+
+## Next up
+
+* [Life cycle](life-cycle.md) — the full contract for `main`, `on_frame`, `on_unload`
+* [UI API](ui/README.md) — every element kind, hierarchy rules, config save/load
+* [Modules](modules/README.md) — render, input, fs, mathx, util, json, net, engine, callbacks

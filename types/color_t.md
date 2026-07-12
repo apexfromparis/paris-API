@@ -1,89 +1,72 @@
----
-description: An RGBA color, 0-255 per channel.
----
-
 # color\_t
 
-`color_t` holds a color as four 8-bit channels: red, green, blue and alpha.
-It is accepted by every rendering and GUI function that draws something.
+RGBA color, one byte per channel (0–255).
 
 ## Fields
 
-| Field | Type  | Range   | Description         |
-| ----- | ----- | ------- | ------------------- |
-| `r`   | `int` | 0–255   | Red channel.        |
-| `g`   | `int` | 0–255   | Green channel.      |
-| `b`   | `int` | 0–255   | Blue channel.       |
-| `a`   | `int` | 0–255   | Alpha (opacity).    |
+| Name | Type | Purpose      |
+|------|------|--------------|
+| `r`  | int  | Red          |
+| `g`  | int  | Green        |
+| `b`  | int  | Blue         |
+| `a`  | int  | Alpha        |
 
 ## Constructors
 
 {% tabs %}
 {% tab title="Lua" %}
 ```lua
-local white = color_t.new(255, 255, 255)       -- a defaults to 255
-local red   = color_t.new(255, 0, 0, 128)      -- 50% transparent red
+local c1 = color_t.new(255, 0, 0)       -- opaque red
+local c2 = color_t.new(0, 255, 0, 128)  -- half-transparent green
 ```
 {% endtab %}
-
 {% tab title="AngelScript" %}
 ```cpp
-color_t white(255, 255, 255);       // a defaults to 255
-color_t red(255, 0, 0, 128);        // 50% transparent red
+color_t c1(255, 0, 0);        // opaque red
+color_t c2(0, 255, 0, 128);   // half-transparent green
 ```
 {% endtab %}
 {% endtabs %}
+
+Alpha defaults to `255` (fully opaque).
 
 ## Methods
 
-### with\_alpha
+| Method              | Returns   | Purpose |
+|---------------------|-----------|---------|
+| `with_alpha(a)`     | `color_t` | Return a copy with the alpha channel replaced. |
+| `lerp(other, t)`    | `color_t` | Linear interpolation between two colors. `t` is clamped to `[0, 1]`. |
 
-Returns a copy with a different alpha. Handy for fading effects.
+## Statics
 
-{% tabs %}
-{% tab title="Lua" %}
-```lua
-local base = color_t.new(0, 255, 120)
-local faded = base:with_alpha(80)
-```
-{% endtab %}
+| Function                | Returns   | Purpose |
+|-------------------------|-----------|---------|
+| `color_t.from_hsv(h, s, v)` (Lua) / `color_t::from_hsv(h, s, v)` (AS) | `color_t` | Build a color from hue / saturation / value in `[0, 1]`. Great for rainbow effects. |
 
-{% tab title="AngelScript" %}
-```cpp
-color_t base(0, 255, 120);
-color_t faded = base.with_alpha(80);
-```
-{% endtab %}
-{% endtabs %}
-
-### lerp
-
-Linearly interpolates toward another color by `t` (0.0–1.0). Useful for
-health-based color gradients.
+## Examples
 
 {% tabs %}
 {% tab title="Lua" %}
 ```lua
-local red   = color_t.new(255, 0, 0)
-local green = color_t.new(0, 255, 0)
-local health_color = red:lerp(green, hp / 100)
+-- health-colored bar
+local col = color_t.new(255, 0, 0):lerp(color_t.new(0, 255, 0), health_pct)
+render.draw_rect_filled(vector2.new(20, 20),
+                        vector2.new(120, 30),
+                        col:with_alpha(180))
+
+-- rainbow border
+local t = os.clock() % 1.0
+render.draw_rect(vector2.new(20, 40),
+                 vector2.new(200, 60),
+                 color_t.from_hsv(t, 0.8, 1.0), 2.0)
 ```
 {% endtab %}
-
 {% tab title="AngelScript" %}
 ```cpp
-color_t red(255, 0, 0);
-color_t green(0, 255, 0);
-color_t health_color = red.lerp(green, hp / 100.0f);
+color_t col = color_t(255, 0, 0).lerp(color_t(0, 255, 0), health_pct);
+render::draw_rect_filled(vector2(20, 20),
+                         vector2(120, 30),
+                         col.with_alpha(180));
 ```
 {% endtab %}
 {% endtabs %}
-
-## Helpers
-
-| Constructor / method       | Description                                   |
-| -------------------------- | --------------------------------------------- |
-| `color_t.new(r, g, b[, a])`| From RGBA channels.                           |
-| `color_t.from_hsv(h, s, v)`| From hue/saturation/value (for rainbow FX).   |
-| `with_alpha(a)`            | Copy with a new alpha.                         |
-| `lerp(other, t)`           | Blend toward `other` by `t`.                   |
