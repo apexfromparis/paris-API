@@ -1,0 +1,10 @@
+{
+  "name": "paris-scripting",
+  "version-string": "0.2.0",
+  "dependencies": [
+    "lua",
+    "sol2",
+    "angelscript",
+    "nlohmann-json"
+  ]
+}
