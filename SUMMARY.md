@@ -39,3 +39,13 @@
 * [net](modules/net.md)
 * [engine](modules/engine.md)
 * [callbacks](modules/callbacks.md)
+
+## IDE Extensions
+
+* [editor](modules/editor.md)
+* [clipboard](modules/clipboard.md)
+* [intellisense](modules/intellisense.md)
+* [ai](modules/ai.md)
+* [tools](modules/tools.md)
+* [settings](modules/settings.md)
+* [terminal](modules/terminal.md)
