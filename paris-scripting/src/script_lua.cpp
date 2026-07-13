@@ -9,11 +9,13 @@
 #include "paris/editor.hpp"
 #include "paris/engine.hpp"
 #include "paris/fs.hpp"
+#include "paris/game_profile.hpp"
 #include "paris/input.hpp"
 #include "paris/intellisense.hpp"
 #include "paris/json.hpp"
 #include "paris/mathx.hpp"
 #include "paris/net.hpp"
+#include "paris/paris_compat.hpp"
 #include "paris/render.hpp"
 #include "paris/sandbox.hpp"
 #include "paris/settings.hpp"
@@ -67,6 +69,12 @@ public:
         bind_settings();
         bind_terminal();
         redirect_print();
+
+        // Compat shim for paris / gamesense flavour scripts (gui.ctx:find,
+        // events.<name>:add, draw.*, entities.*, game.*, hvh, theme, mods,
+        // ant, utils, ffi stub, math.calc_angle / math.vec3 / math.vec2).
+        // Installed after our own bindings so it can wrap them.
+        paris_compat::install(lua_);
     }
 
     static void timeout_hook_c(lua_State* L, lua_Debug*) {

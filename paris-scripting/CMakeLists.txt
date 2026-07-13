@@ -38,6 +38,8 @@ add_library(paris_scripting STATIC
     src/tools.cpp
     src/settings.cpp
     src/terminal.cpp
+    src/game_profile.cpp
+    src/paris_compat.cpp
     src/script_lua.cpp
     src/script_as.cpp
 )
@@ -65,3 +67,8 @@ endif()
 
 add_executable(paris_demo demo/main.cpp)
 target_link_libraries(paris_demo PRIVATE paris_scripting)
+
+# Multi-game script runner — loads every .lua/.as from a directory, picks a
+# game_profile by process name, and ticks the engine for a few frames.
+add_executable(paris_runner demo/runner.cpp)
+target_link_libraries(paris_runner PRIVATE paris_scripting)
